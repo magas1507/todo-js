@@ -5,7 +5,8 @@ const input = document.getElementById('input')
 //cada vez que usamos un templete accedo a su contenido 
 const template = document.getElementById('template').content
 const fragment = document.createDocumentFragment()
-let tareas = {
+let tareas = {}
+/* let tareas = {
   1605990629039:{
     id: 1605990629039,
     texto: 'Tarea #1',
@@ -16,12 +17,16 @@ let tareas = {
     texto: 'Tarea #2',
     estado: false
   }
-}
+} */
 
 //console.log(Date.now())
 //mostrar tareas ya agregadas y verificar que todo el dom este cargado
 
 document.addEventListener('DOMContentLoaded', () => {
+  //validando el localstorage
+  if (localStorage.getItem('tareas')) {
+    tareas = JSON.parse(localStorage.getItem('tareas'))
+  }
   pintarTareas()
 })
 
@@ -66,6 +71,17 @@ const setTarea = e => {
 }
 
  const pintarTareas = () =>{
+   //localStorage 
+   localStorage.setItem('tareas', JSON.stringify(tareas))
+   //validación de cuando no tiene tareas
+   if (Object.values(tareas).length === 0) {
+     listaTarea.innerHTML = `
+     <div class="alert alert-fark ext-center">
+        No hay tareas pendientes
+     </div>  
+     `
+     return
+   }
    //limpiamos para evitar repetir
    console.log('entra a pintar tareas ')
    listaTarea.innerHTML = ""
@@ -73,15 +89,18 @@ const setTarea = e => {
   Object.values(tareas).forEach(tarea => {
     //para pintar hay que realizar el clone en el template
     
+    //el clone del templete esta primero para evitar modificar el original 
      const clone = template.cloneNode(true)
-     console.log('imprimo el clone del tmplate ',clone)
+     
      clone.querySelector('p').textContent = tarea.texto
-      console.log('imprimo el parrafo ',  clone.querySelector('p').textContent = tarea.texto)
+     if ( tarea.estado) {
+       clone.querySelector('.alert').classList.replace('alert-warning', 'alert-primary')
+       clone.querySelectorAll('.fas')[0].classList.replace('fa-check-circle', 'fa-undo-alt')
+       clone.querySelector('p').style.textDecoration = 'Line-through'
+     }
      clone.querySelectorAll('.fas')[0].dataset.id = tarea.id
-     console.log( 'dataset 1', clone.querySelectorAll('.fas')[0].dataset.id = tarea.id)
-     console.log( 'dataset 1', clone.querySelectorAll('.fas')[0].dataset.estado = tarea.estado)
-    // clone.querySelectorAll('.fas')[1].dataset.id = tarea.id
-     //console.log( 'dataset 2', clone.querySelectorAll('.fas')[1].dataset.id = tarea.id)
+     clone.querySelectorAll('.fas')[1].dataset.id = tarea.id
+     
      fragment.appendChild(clone)
   })
   //evitar el reflow
@@ -89,13 +108,27 @@ const setTarea = e => {
  }
 
  const btnAccion = e => {
-   console.log("entra al btnaccion")
+   
     //console.log(e.target.classList.contains('fa-check-circle'))
   
     if (e.target.classList.contains('fa-check-circle')) {
-      console.log('estado',tareas[e.target.dataset.id].estado = true)
+      //console.log('estado',tareas[e.target.dataset.id].estado = true)
       tareas[e.target.dataset.id].estado = true
       pintarTareas()
+    }
+
+  //eliminando la tarea 
+
+  if(e.target.classList.contains('fa-minus-circle')){
+    delete tareas[e.target.dataset.id]
+    pintarTareas()
+    console.log(tareas)
+  }
+  //Quitamos el tachado en la tarea
+  if (e.target.classList.contains('fa-undo-alt')) {
+    //console.log('estado',tareas[e.target.dataset.id].estado = true)
+    tareas[e.target.dataset.id].estado = false
+    pintarTareas()
   }
     //evita que si tengo otros addListener se activen, solo los que estan drentro del contenedor
     e.stopPropagation()
